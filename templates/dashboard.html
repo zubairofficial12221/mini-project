@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - College Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Total Students</h5>
+                        <h2 class="mb-0">{{ total_students }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Today's Attendance</h5>
+                        <h2 class="mb-0">{{ today_attendance }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Current Weather</h5>
+                        {% if latest_weather %}
+                        <h4 class="mb-0">{{ latest_weather.temperature }}°C</h4>
+                        <small>{{ latest_weather.description }}</small>
+                        {% else %}
+                        <h4 class="mb-0">--</h4>
+                        {% endif %}
+                    </div>
+                    <i class="fas fa-cloud-sun fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather Alert -->
+{% if latest_weather %}
+{% set bad_conditions = ['rain', 'storm', 'snow', 'thunderstorm', 'extreme', 'drizzle'] %}
+{% set is_bad = latest_weather.main_condition.lower() in bad_conditions or latest_weather.temperature > 40 %}
+{% if is_bad %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h5><i class="fas fa-exclamation-triangle"></i> Weather Alert</h5>
+            <p class="mb-0">
+                <strong>Bad weather conditions detected!</strong><br>
+                Temperature: {{ latest_weather.temperature }}°C | Condition: {{ latest_weather.description }}<br>
+                <em>Holiday Recommendation: Consider declaring a holiday for the safety of students and staff.</em>
+            </p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('attendance') }}" class="btn btn-primary me-2 mb-2">
+                    <i class="fas fa-calendar-check"></i> Mark Attendance
+                </a>
+                <a href="{{ url_for('add_student') }}" class="btn btn-success me-2 mb-2">
+                    <i class="fas fa-user-plus"></i> Add Student
+                </a>
+                <a href="{{ url_for('create_seating') }}" class="btn btn-info me-2 mb-2">
+                    <i class="fas fa-chair"></i> Create Seat Arrangement
+                </a>
+                <a href="{{ url_for('weather') }}" class="btn btn-warning mb-2">
+                    <i class="fas fa-cloud-sun"></i> View Weather
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Attendance -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Attendance Records</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_attendances %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Hour</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in recent_attendances %}
+                            <tr>
+                                <td>{{ attendance.date }}</td>
+                                <td>{{ attendance.student.name }} ({{ attendance.student.roll_number }})</td>
+                                <td>{{ attendance.hour }}</td>
+                                <td>
+                                    {% if attendance.status == 'present' %}
+                                    <span class="badge bg-success">Present</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No attendance records yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

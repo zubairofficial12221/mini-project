@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Weather - College Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-cloud-sun"></i> Weather Information</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Current Weather -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cloud"></i> Current Weather</h5>
+            </div>
+            <div class="card-body" id="current-weather">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Weather Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if latest_weather %}
+                {% set bad_conditions = ['rain', 'storm', 'snow', 'thunderstorm', 'extreme', 'drizzle'] %}
+                {% set is_bad = latest_weather.main_condition.lower() in bad_conditions or latest_weather.temperature > 40 %}
+                
+                {% if is_bad %}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Bad Weather Alert</h6>
+                    <p class="mb-0">
+                        Current conditions may affect college operations. 
+                        Consider declaring a holiday for safety.
+                    </p>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle"></i> Weather Normal</h6>
+                    <p class="mb-0">Current weather conditions are suitable for normal operations.</p>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-muted">No weather data available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather History -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Weather History (Last 24 Hours)</h5>
+            </div>
+            <div class="card-body">
+                {% if weather_history %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Temperature</th>
+                                <th>Condition</th>
+                                <th>Main Condition</th>
+                                <th>City</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for weather in weather_history %}
+                            <tr>
+                                <td>{{ weather.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td><strong>{{ weather.temperature }}°C</strong></td>
+                                <td>{{ weather.description }}</td>
+                                <td><span class="badge bg-info">{{ weather.main_condition }}</span></td>
+                                <td>{{ weather.city }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No weather history available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fetch current weather
+    fetch('{{ url_for("get_current_weather") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const weatherDiv = document.getElementById('current-weather');
+                const w = data.data;
+                
+                let alertClass = 'success';
+                let alertIcon = 'check-circle';
+                const badConditions = ['rain', 'storm', 'snow', 'thunderstorm', 'extreme', 'drizzle'];
+                if (badConditions.some(c => w.main.toLowerCase().includes(c)) || w.temperature > 40) {
+                    alertClass = 'warning';
+                    alertIcon = 'exclamation-triangle';
+                }
+                
+                weatherDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-${getWeatherIcon(w.main)} fa-4x text-primary mb-3"></i>
+                        <h2>${w.temperature}°C</h2>
+                        <h5>${w.description}</h5>
+                        <p class="text-muted">${w.city}</p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Humidity</small>
+                                <p class="mb-0"><strong>${w.humidity}%</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Wind Speed</small>
+                                <p class="mb-0"><strong>${w.wind_speed} m/s</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('current-weather').innerHTML = 
+                    '<div class="alert alert-danger">Error loading weather data</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('current-weather').innerHTML = 
+                '<div class="alert alert-danger">Error loading weather data</div>';
+        });
+    
+    function getWeatherIcon(main) {
+        const icons = {
+            'Clear': 'sun',
+            'Clouds': 'cloud',
+            'Rain': 'cloud-rain',
+            'Drizzle': 'cloud-rain',
+            'Thunderstorm': 'bolt',
+            'Snow': 'snowflake',
+            'Mist': 'smog',
+            'Fog': 'smog'
+        };
+        return icons[main] || 'cloud-sun';
+    }
+</script>
+{% endblock %}
+

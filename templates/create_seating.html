@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Create Seat Arrangement - College Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-chair"></i> Create Exam Seat Arrangement</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('create_seating') }}">
+                    <div class="mb-3">
+                        <label for="exam_name" class="form-label">Exam Name *</label>
+                        <input type="text" class="form-control" id="exam_name" name="exam_name" 
+                               placeholder="e.g., Mid-Term Examination 2024" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="num_rooms" class="form-label">Number of Rooms *</label>
+                        <input type="number" class="form-control" id="num_rooms" name="num_rooms" 
+                               min="1" required>
+                        <small class="form-text text-muted">Total number of examination rooms</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="seats_per_room" class="form-label">Seats per Room *</label>
+                        <input type="number" class="form-control" id="seats_per_room" name="seats_per_room" 
+                               min="1" required>
+                        <small class="form-text text-muted">Maximum number of seats in each room</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> The system will automatically arrange all students, 
+                        ensuring no two students from the same department sit next to each other.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Generate Seating Arrangement
+                        </button>
+                        <a href="{{ url_for('seating') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

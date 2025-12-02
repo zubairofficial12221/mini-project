@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance - College Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-btn {
+        min-width: 100px;
+    }
+    .present-btn {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .absent-btn {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-calendar-check"></i> Mark Attendance</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('attendance') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ selected_date }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="hour" class="form-label">Hour/Period</label>
+                        <select class="form-select" id="hour" name="hour" required>
+                            {% for h in range(1, 9) %}
+                            <option value="{{ h }}" {% if selected_hour == h|string %}selected{% endif %}>Hour {{ h }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Attendance for {{ selected_date }} - Hour {{ selected_hour }}</h5>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="markAllPresent()">
+                        <i class="fas fa-check-double"></i> Mark All Present
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr data-student-id="{{ student.id }}">
+                                <td><strong>{{ student.roll_number }}</strong></td>
+                                <td>{{ student.name }}</td>
+                                <td><span class="badge bg-secondary">{{ student.department }}</span></td>
+                                <td>
+                                    {% if attendance_dict.get(student.id) == 'present' %}
+                                    <span class="badge bg-success">Present</span>
+                                    {% elif attendance_dict.get(student.id) == 'absent' %}
+                                    <span class="badge bg-danger">Absent</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Marked</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-success attendance-btn present-btn" 
+                                                onclick="markAttendance({{ student.id }}, 'present')">
+                                            <i class="fas fa-check"></i> Present
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger attendance-btn absent-btn" 
+                                                onclick="markAttendance({{ student.id }}, 'absent')">
+                                            <i class="fas fa-times"></i> Absent
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> No students found. Please add students first.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markAttendance(studentId, status) {
+        const date = document.getElementById('date').value;
+        const hour = document.getElementById('hour').value;
+        
+        fetch('{{ url_for("mark_attendance") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                date: date,
+                hour: hour,
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to show updated status
+                location.reload();
+            } else {
+                alert('Error marking attendance');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking attendance');
+        });
+    }
+    
+    function markAllPresent() {
+        if (confirm('Mark all students as present?')) {
+            const date = document.getElementById('date').value;
+            const hour = document.getElementById('hour').value;
+            const studentRows = document.querySelectorAll('tr[data-student-id]');
+            
+            studentRows.forEach(row => {
+                const studentId = row.getAttribute('data-student-id');
+                markAttendance(studentId, 'present');
+            });
+        }
+    }
+</script>
+{% endblock %}
+
