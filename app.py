@@ -464,9 +464,9 @@ def create_seating():
                 dept_students[student.department] = []
             dept_students[student.department].append(student)
         
-    # Shuffle departments to ensure distribution
-    departments = list(dept_students.keys())
-    random.shuffle(departments)
+        # Shuffle departments to ensure distribution
+        departments = list(dept_students.keys())
+        random.shuffle(departments)
         
         # Round-robin assignment to avoid same department adjacent
         current_room = rooms[room_index]
