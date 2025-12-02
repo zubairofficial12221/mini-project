@@ -124,19 +124,28 @@ class WeatherLog(db.Model):
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# Initialize database
-with app.app_context():
-    db.create_all()
-    # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(
-            username='admin',
-            email='admin@college.com',
-            password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-            role='admin'
-        )
-        db.session.add(admin)
-        db.session.commit()
+# Initialize database (only if connection is available)
+def init_db():
+    """Initialize database tables and create default admin user"""
+    try:
+        with app.app_context():
+            db.create_all()
+            # Create default admin user if not exists
+            if not User.query.filter_by(username='admin').first():
+                admin = User(
+                    username='admin',
+                    email='admin@college.com',
+                    password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
+                    role='admin'
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("Default admin user created: admin/admin123")
+    except Exception as e:
+        print(f"Database initialization skipped (connection not available): {e}")
+
+# Try to initialize database on import (will skip if connection fails)
+init_db()
 
 # Weather checking function
 def check_weather():
@@ -610,6 +619,8 @@ def download_seating_pdf(arrangement_id):
     return send_file(filepath, as_attachment=True)
 
 if __name__ == '__main__':
+    # Ensure database is initialized before starting app
+    init_db()
     atexit.register(lambda: scheduler.shutdown())
     app.run(debug=True, host='0.0.0.0', port=5000)
 
